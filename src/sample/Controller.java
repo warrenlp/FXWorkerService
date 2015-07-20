@@ -74,6 +74,7 @@ public class Controller implements Initializable {
         }
     }
 
+    @SuppressWarnings("unchecked")
     void initializeWorker() {
         mWorker = new WorkerService(topTreeView.getSelectionModel().getSelectedItems());
 
@@ -81,9 +82,16 @@ public class Controller implements Initializable {
             @Override
             public void changed(ObservableValue observable, Object oldValue, Object newValue) {
                 if (newValue instanceof ObservableList<?>) {
-                    ObservableList<TreeItem<String>> newItemsList = (ObservableList<TreeItem<String>>) newValue;
-                    System.out.println("New Items:");
-                    bottomTreeView.getRoot().getChildren().addAll(newItemsList);
+                    ObservableList<?> newValueAsObsList = (ObservableList<?>) newValue;
+                    for (Object treeItemObj : newValueAsObsList) {
+                        if (treeItemObj instanceof TreeItem<?>) {
+                            TreeItem<?> treeItem = (TreeItem<?>) treeItemObj;
+                            Object treeValueObj = treeItem.getValue();
+                            if (treeValueObj instanceof String) {
+                                bottomTreeView.getRoot().getChildren().add(treeItem);
+                            }
+                        }
+                    }
                 }
             }
         });
