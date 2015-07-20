@@ -28,9 +28,7 @@ public class WorkerService extends Service<ObservableList<TreeItem<String>>> {
         completionService = new ExecutorCompletionService<>(executorService);
         mSelectedTreeItemListProp = new SimpleObjectProperty<>();
         mSelectedList = selectedList;
-        mSelectedTreeItemListProp.bind(Bindings.createObjectBinding(() -> {
-            return mSelectedList;
-        }, mSelectedList));
+        mSelectedTreeItemListProp.bind(Bindings.createObjectBinding(() -> mSelectedList, mSelectedList));
     }
 
     public boolean isShutdown() { return executorService.isShutdown(); }

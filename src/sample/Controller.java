@@ -57,18 +57,6 @@ public class Controller implements Initializable {
     private void copyToBottom(ActionEvent actionEvent) {
 
         mWorker.restart();
-
-        mWorker.valueProperty().addListener(new ChangeListener() {
-            @Override
-            public void changed(ObservableValue observable, Object oldValue, Object newValue) {
-                if (newValue instanceof ObservableList<?>) {
-                    ObservableList<TreeItem<String>> newItemsList = (ObservableList<TreeItem<String>>) newValue;
-                    System.out.println("New Items:");
-                    bottomTreeView.getRoot().getChildren().addAll(newItemsList);
-                }
-            }
-        });
-
         System.out.println("I'm finished: " + System.currentTimeMillis());
     }
 
@@ -88,6 +76,17 @@ public class Controller implements Initializable {
 
     void initializeWorker() {
         mWorker = new WorkerService(topTreeView.getSelectionModel().getSelectedItems());
+
+        mWorker.valueProperty().addListener(new ChangeListener() {
+            @Override
+            public void changed(ObservableValue observable, Object oldValue, Object newValue) {
+                if (newValue instanceof ObservableList<?>) {
+                    ObservableList<TreeItem<String>> newItemsList = (ObservableList<TreeItem<String>>) newValue;
+                    System.out.println("New Items:");
+                    bottomTreeView.getRoot().getChildren().addAll(newItemsList);
+                }
+            }
+        });
         copyBtn.disableProperty().bind(mWorker.stateProperty().isEqualTo(Worker.State.RUNNING));
     }
 
@@ -101,6 +100,4 @@ public class Controller implements Initializable {
     private void shutDownExecutor(ActionEvent actionEvent) {
         doSomeShitExecutor.shutdown();
     }
-
-
 }
