@@ -1,7 +1,6 @@
 package sample;
 
 import javafx.beans.binding.Bindings;
-import javafx.beans.binding.ListBinding;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
@@ -9,8 +8,10 @@ import javafx.collections.ObservableList;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 import javafx.scene.control.TreeItem;
+import sample.threads.LeakedExceptionRunnable;
+import sample.threads.NamedThreadsFactory;
+import sample.threads.ScheduledThreadPoolExecutorAfterExecute;
 
-import java.util.List;
 import java.util.concurrent.*;
 
 /**
@@ -19,21 +20,36 @@ import java.util.concurrent.*;
 public class WorkerService extends Service<ObservableList<TreeItem<String>>> {
 
     ExecutorService executorService;
+    ScheduledExecutorService scheduledExecutorService;
     CompletionService<TreeItem<String>> completionService;
     ObservableList<TreeItem<String>> mSelectedList;
     ObjectProperty<ObservableList<TreeItem<String>>> mSelectedTreeItemListProp;
 
     public WorkerService(ObservableList<TreeItem<String>> selectedList) {
         executorService = Executors.newFixedThreadPool(5);
+//        scheduledExecutorService = ScheduledThreadPoolExecutorAfterExecute.newSingleThreadScheduledExecutor(new NamedThreadsFactory());
+////        scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new NamedThreadsFactory());
+//        scheduledExecutorService.scheduleAtFixedRate(new LeakedExceptionRunnable()
+//                , 0
+//                , 2, TimeUnit.SECONDS);
         completionService = new ExecutorCompletionService<>(executorService);
         mSelectedTreeItemListProp = new SimpleObjectProperty<>();
         mSelectedList = selectedList;
         mSelectedTreeItemListProp.bind(Bindings.createObjectBinding(() -> mSelectedList, mSelectedList));
     }
 
-    public boolean isShutdown() { return executorService.isShutdown(); }
+    public boolean isShutdown() {
+        return (executorService.isShutdown() && scheduledExecutorService.isShutdown());
+    }
 
-    public void shutdown() { executorService.shutdown(); }
+    public void shutdown() {
+        if (!executorService.isShutdown()) {
+            executorService.shutdown();
+        }
+        if (!scheduledExecutorService.isShutdown()) {
+            scheduledExecutorService.shutdown();
+        }
+    }
 
     @Override
     protected Task<ObservableList<TreeItem<String>>> createTask() {
