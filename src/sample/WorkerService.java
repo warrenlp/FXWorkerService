@@ -11,17 +11,20 @@ import javafx.scene.control.TreeItem;
 import sample.threads.LeakedExceptionRunnable;
 import sample.threads.NamedThreadsFactory;
 import sample.threads.ScheduledThreadPoolExecutorAfterExecute;
+import sample.threads.TreeItemStringStripperCallable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.*;
 
 /**
  * Created by warre_000 on 7/19/2015.
  */
-public class WorkerService extends Service<ObservableList<TreeItem<String>>> {
+public class WorkerService extends Service<List<String>> {
 
     ExecutorService executorService;
-    ScheduledExecutorService scheduledExecutorService;
-    CompletionService<TreeItem<String>> completionService;
+//    ScheduledExecutorService scheduledExecutorService;
+    CompletionService<String> completionService;
     ObservableList<TreeItem<String>> mSelectedList;
     ObjectProperty<ObservableList<TreeItem<String>>> mSelectedTreeItemListProp;
 
@@ -39,38 +42,37 @@ public class WorkerService extends Service<ObservableList<TreeItem<String>>> {
     }
 
     public boolean isShutdown() {
-        return (executorService.isShutdown() && scheduledExecutorService.isShutdown());
+        return (executorService.isShutdown());// && scheduledExecutorService.isShutdown());
     }
 
     public void shutdown() {
         if (!executorService.isShutdown()) {
             executorService.shutdown();
         }
-        if (!scheduledExecutorService.isShutdown()) {
-            scheduledExecutorService.shutdown();
-        }
+//        if (!scheduledExecutorService.isShutdown()) {
+//            scheduledExecutorService.shutdown();
+//        }
     }
 
     @Override
-    protected Task<ObservableList<TreeItem<String>>> createTask() {
-        return new Task<ObservableList<TreeItem<String>>>() {
+    protected Task<List<String>> createTask() {
+        return new Task<List<String>>() {
 
             @Override
-            protected ObservableList<TreeItem<String>> call() throws Exception {
+            protected List<String> call() throws Exception {
                 final ObservableList<TreeItem<String>> observableList = mSelectedTreeItemListProp.get();
                 final int total = observableList.size();
                 updateProgress(0, total);
 
                 for (TreeItem<String> treeItem : observableList) {
-                    DoSomeShitCallable doSomeShitCallable = new DoSomeShitCallable(treeItem);
-                    completionService.submit(doSomeShitCallable);
+                    completionService.submit(new TreeItemStringStripperCallable(treeItem));
                 }
 
-                ObservableList<TreeItem<String>> newItemsList = FXCollections.observableArrayList();
+                List<String> newItemsList = new ArrayList<>();
                 for (int i=1; i<=total; ++i) {
-                    Future<TreeItem<String>> treeItemFuture = completionService.take();
-                    TreeItem<String> localItem = treeItemFuture.get();
-                    newItemsList.add(localItem);
+                    Future<String> treeItemFuture = completionService.take();
+                    String localString = treeItemFuture.get();
+                    newItemsList.add(localString);
                     updateProgress(i, total);
                 }
 

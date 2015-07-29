@@ -18,6 +18,7 @@ import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 
 import java.net.URL;
+import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.*;
 
@@ -77,7 +78,6 @@ public class Controller implements Initializable {
     @SuppressWarnings("unchecked")
     void initializeWorker() {
         mWorker = new WorkerService(topTreeView.getSelectionModel().getSelectedItems());
-
         mWorker.valueProperty().addListener(new ChangeListener() {
             @Override
             public void changed(ObservableValue observable, Object oldValue, Object newValue) {
@@ -96,6 +96,22 @@ public class Controller implements Initializable {
             }
         });
         copyBtn.disableProperty().bind(mWorker.stateProperty().isEqualTo(Worker.State.RUNNING));
+        mWorker.stateProperty().addListener(new ChangeListener<Worker.State>() {
+            @Override
+            public void changed(ObservableValue<? extends Worker.State> observable, Worker.State oldValue, Worker.State newValue) {
+                if (newValue.equals(Worker.State.SUCCEEDED)) {
+                    System.out.println("The process succeeded.");
+                    List<String> workerList = mWorker.getValue();
+                    System.out.println(workerList);
+                }
+            }
+        });
+        mWorker.exceptionProperty().addListener(new ChangeListener<Throwable>() {
+            @Override
+            public void changed(ObservableValue<? extends Throwable> observable, Throwable oldValue, Throwable newValue) {
+                System.out.println(newValue.toString());
+            }
+        });
     }
 
     public void stop() {
